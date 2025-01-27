@@ -61,23 +61,32 @@ public class MemorySpace {
 		if (length < 0){
 			return -1;
 		}
-
-		Node curr = freeList.getFirst();
-		while(curr != null){
-			if(curr.block.length >= length){
-			MemoryBlock allocated = new MemoryBlock(curr.block.baseAddress,length);
-			allocatedList.addLast(allocated);
-				if (curr.block.length == length) {
-					freeList.remove(curr);
-				} else if (curr.block.length>length) {
-					curr.block.length -= length;
-					curr.block.baseAddress+=length;
-				}
-				return allocated.baseAddress;
+		
+		Node temp = freeList.getFirst();
+		Node mallocBlock = null;
+		
+		while(temp != null) {
+			if (temp.block.length >= length) {
+				mallocBlock = temp;
+				break;
 			}
-			curr = curr.next;
+			temp = temp.next;
 		}
-		return -1;
+
+		if (mallocBlock != null) {
+			MemoryBlock newBlock = new MemoryBlock(mallocBlock.block.baseAddress , length);
+			allocatedList.addLast(newBlock);
+			mallocBlock.block.length -= length;
+			mallocBlock.block.baseAddress += length;
+			
+			if (mallocBlock.block.length == 0) {
+				freeList.remove(mallocBlock);
+			}
+
+			return mallocBlock.block.baseAddress;
+		}
+		
+		return -1;	
 	}
 
 	/**
