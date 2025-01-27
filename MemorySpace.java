@@ -57,8 +57,26 @@ public class MemorySpace {
 	 *        the length (in words) of the memory block that has to be allocated
 	 * @return the base address of the allocated block, or -1 if unable to allocate
 	 */
-	public int malloc(int length) {		
-		//// Replace the following statement with your code
+	public int malloc(int length) {
+		if (length < 0){
+			return -1;
+		}
+
+		Node curr = freeList.getFirst();
+		while(curr != null){
+			if(curr.block.length >= length){
+			MemoryBlock allocated = new MemoryBlock(curr.block.baseAddress,length);
+			allocatedList.addLast(allocated);
+				if (curr.block.length == length) {
+					freeList.remove(curr);
+				} else if (curr.block.length>length) {
+					curr.block.length -= length;
+					curr.block.baseAddress+=length;
+				}
+				return allocated.baseAddress;
+			}
+			curr = curr.next;
+		}
 		return -1;
 	}
 
@@ -71,7 +89,19 @@ public class MemorySpace {
 	 *            the starting address of the block to freeList
 	 */
 	public void free(int address) {
-		//// Write your code here
+		if (allocatedList.getSize() == 0) {
+			throw new IllegalArgumentException("index must be between 0 and size");
+		}
+
+		Node curr = allocatedList.getFirst();
+		while (curr != null) {
+			if (curr.block.baseAddress==address) {
+				allocatedList.remove(curr);
+				freeList.addLast(curr.block);
+				break;
+			}
+			curr = curr.next;
+		}
 	}
 	
 	/**
@@ -88,6 +118,21 @@ public class MemorySpace {
 	 * In this implementation Malloc does not call defrag.
 	 */
 	public void defrag() {
-		//// Write your code here
+		for (int i = 0; i < freeList.getSize(); i++) {
+			MemoryBlock currBlock = freeList.getBlock(i);
+			int expectedBaseAddress = currBlock.baseAddress + currBlock.length;
+	
+			ListIterator iterator = freeList.iterator();
+			while (iterator.hasNext()) {
+				MemoryBlock nextBlock = iterator.current.block;
+				if (nextBlock.baseAddress == expectedBaseAddress) {
+					currBlock.length += nextBlock.length; 
+					freeList.remove(iterator.current); 
+					i = -1; 
+					break;
+				}
+				iterator.next();
+			}
+		}
 	}
 }
