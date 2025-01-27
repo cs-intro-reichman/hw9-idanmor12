@@ -21,7 +21,7 @@ public class LinkedList {
 	 * @return The first node of the list.
 	 */		
 	public Node getFirst() {
-		return this.first;
+		return first;
 	}
 
 	/**
@@ -29,7 +29,7 @@ public class LinkedList {
 	 * @return The last node of the list.
 	 */		
 	public Node getLast() {
-		return this.last;
+		return last;
 	}
 	
 	/**
@@ -37,7 +37,7 @@ public class LinkedList {
 	 * @return The size of the list.
 	 */		
 	public int getSize() {
-		return this.size;
+		return size;
 	}
 	
 	/**
@@ -50,16 +50,16 @@ public class LinkedList {
 	 * @return the node at the given index
 	 */		
 	public Node getNode(int index) {
-		if (index < 0 || index >= size) {
+		if (index < 0 || index > size) {
 			throw new IllegalArgumentException(
 					"index must be between 0 and size");
 		}
-		Node curr = first;
-		for (int i = 0; i < index; i++) {
-			curr = curr.next;
+
+		ListIterator iterator = new ListIterator(first);
+		for (int i = 0; i < index; i++){
+			iterator.next();	
 		}
-		
-		return curr;
+		return iterator.current;	
 	}
 	
 	/**
@@ -85,17 +85,26 @@ public class LinkedList {
 		if (index < 0 || index > size) {
 			throw new IllegalArgumentException(
 					"index must be between 0 and size");
-		} else if (index == 0) {
-			addFirst(block);
-		} else if (index == size) {
-			addLast(block);
-		} else {
-			Node newNode = new Node(block);
-			Node prev = getNode(index - 1);
-			newNode.next = prev.next;
-			prev.next = newNode;
-			size++;
+		} 
+
+        Node newNode = new Node(block);
+		if (index == 0) {
+			newNode.next = first;
+            first = newNode;
+			if (size == 0) {
+				last = newNode;
+			}
+        } else if (index == size) {
+			last.next = newNode;
+			last = newNode;
 		}
+		else {
+			Node previousNode = getNode(index-1);
+            newNode.next = previousNode.next;
+            previousNode.next = newNode;
+		}
+
+		size++;
 	}
 
 	/**
@@ -165,30 +174,17 @@ public class LinkedList {
 	 *        the node that will be removed from this list
 	 */
 	public void remove(Node node) {
-		Node prev = null;
-		Node current = first;
-
 		if (node == null) {
-			throw new NullPointerException();
-		} 
-		
-		while (current != null && !current.equals(node)) {
-			prev = current;
-			current = current.next;
+			throw new NullPointerException("Node cannot be null");
 		}
 
-		if (prev == null) { 
-			first = first.next;
-			if (first == null) { 
-				last = null;
-			}
-		} else {
-			prev.next = current.next;
-			if (current.equals(last)) {
-				last = prev;
-			}
+		int index = indexOf(node.block);
+		if (index == -1) {
+			throw new IllegalArgumentException(
+				"index must be between 0 and size");
 		}
-		size--;
+		
+		remove(index);
 	}
 
 	/**
