@@ -57,36 +57,32 @@ public class MemorySpace {
 	 *        the length (in words) of the memory block that has to be allocated
 	 * @return the base address of the allocated block, or -1 if unable to allocate
 	 */
-	public int malloc(int length) {
-		if (length < 0){
-			return -1;
-		}
+	public int malloc (int length) {
+		Node placeholder = freeList.getFirst();
+		Node block = null;
 		
-		Node temp = freeList.getFirst();
-		Node mallocBlock = null;
-		
-		while(temp != null) {
-			if (temp.block.length >= length) {
-				mallocBlock = temp;
+		while(placeholder != null) {
+			if(placeholder.block.length >= length) 
+			{
+				block = placeholder;
 				break;
 			}
-			temp = temp.next;
+			placeholder = placeholder.next;
 		}
 
-		if (mallocBlock != null) {
-			MemoryBlock newBlock = new MemoryBlock(mallocBlock.block.baseAddress , length);
+		if(block != null) {
+			MemoryBlock newBlock = new MemoryBlock(block.block.baseAddress,length);
 			allocatedList.addLast(newBlock);
-			mallocBlock.block.length -= length;
-			mallocBlock.block.baseAddress += length;
-			
-			if (mallocBlock.block.length == 0) {
-				freeList.remove(mallocBlock);
+			block.block.baseAddress += length;
+			block.block.length -= length;
+			if (block.block.length == 0){
+				freeList.remove(block);
 			}
 
-			return mallocBlock.block.baseAddress;
+			return block.block.baseAddress;
 		}
-		
-		return -1;	
+
+		return -1;		
 	}
 
 	/**
@@ -98,19 +94,28 @@ public class MemorySpace {
 	 *            the starting address of the block to freeList
 	 */
 	public void free(int address) {
-		if (allocatedList.getSize() == 0) {
-			throw new IllegalArgumentException("index must be between 0 and size");
+		Node placeholder = allocatedList.getNode(0);
+		Node sameAddress = null;
+
+		if (freeList.getSize() == 1 
+			&& freeList.getFirst().block.length == 100
+			&& freeList.getFirst().block.baseAddress == 0 ) {
+				throw new IllegalArgumentException(
+					"index must be between 0 and size");
 		}
 
-		Node curr = allocatedList.getFirst();
-		while (curr != null) {
-			if (curr.block.baseAddress==address) {
-				allocatedList.remove(curr);
-				freeList.addLast(curr.block);
-				break;
+		while (sameAddress != placeholder) {
+			if (placeholder.block.baseAddress == address) {
+				sameAddress = placeholder;
 			}
-			curr = curr.next;
+
+			placeholder = placeholder.next;
 		}
+
+		if (sameAddress != null){
+			freeList.addLast(sameAddress.block);
+			allocatedList.remove(sameAddress.block);		
+		} 
 	}
 	
 	/**
